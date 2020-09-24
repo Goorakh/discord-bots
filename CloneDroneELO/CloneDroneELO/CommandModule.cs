@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using System;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -10,14 +11,12 @@ namespace CloneDroneELO
     public class CommandModule : ModuleBase<SocketCommandContext>
     {
         [Group("nickname")]
-        [Name("Nickname")]
         public class NicknameModule : ModuleBase<SocketCommandContext>
         {
             [Command("set")]
-            [Name("Set")]
-            [RequireContext(ContextType.Guild)]
-            public async Task SetUserNicknameAsync([Name("")] [Remainder] string nickname)
+            public async Task SetUserNicknameAsync([Remainder] string nickname)
             {
+                nickname = nickname.Trim();
                 if (string.IsNullOrWhiteSpace(nickname))
                     return;
 
@@ -31,6 +30,7 @@ namespace CloneDroneELO
                 if (user.Id != Context.User.Id && !user.GuildPermissions.ManageNicknames)
                     return;
 
+                nickname = nickname.Trim();
                 if (string.IsNullOrWhiteSpace(nickname))
                     return;
 
@@ -38,7 +38,6 @@ namespace CloneDroneELO
             }
 
             [Command("reset")]
-            [RequireContext(ContextType.Guild)]
             public async Task ResetUserNicknameAsync()
             {
                 await Program.TryChangeUserNicknameTo(Context.User.Id, string.Empty);
@@ -55,17 +54,37 @@ namespace CloneDroneELO
             }
         }
         
-        [Group("region")]
+        [Group("setregion")]
         public class RegionModule : ModuleBase<SocketCommandContext>
         {
-            [Command("setpreferred")]
-            [RequireContext(ContextType.Guild)]
-            public async Task SetUserRegionAsync([Remainder] string region)
+            [Command]
+            public async Task SetUserRegionAsync([Remainder] string regionString)
             {
-                region = Regex.Replace(region, @"\s+", "");
+                regionString = Regex.Replace(regionString, @"\s+", "");
                 
-                SocketGuildUser user = Context.Guild.GetUser(Context.User.Id);
-                
+                if (!Enum.TryParse(regionString, true, out RegionType region) || region == RegionType.None || region == RegionType.USCentral)
+                {
+                    await Context.Channel.SendMessageAsync("Invalid region '" + regionString + "'!");
+                    return;
+                }
+
+                await Program.TrySetPreferredRegion(Context.User.Id, region);
+            }
+
+            [Command]
+            [RequireContext(ContextType.Guild)]
+            [RequireUserPermission(ChannelPermission.ManageRoles)]
+            public async Task SetUserRegionAsync(IGuildUser user, [Remainder] string regionString)
+            {
+                regionString = Regex.Replace(regionString, @"\s+", "");
+
+                if (!Enum.TryParse(regionString, true, out RegionType region) || region == RegionType.None || region == RegionType.USCentral)
+                {
+                    await Context.Channel.SendMessageAsync("Invalid region '" + regionString + "'!");
+                    return;
+                }
+
+                await Program.TrySetPreferredRegion(user.Id, region);
             }
         }
     }

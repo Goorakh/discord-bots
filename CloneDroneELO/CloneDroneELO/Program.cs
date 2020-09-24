@@ -31,6 +31,7 @@ namespace CloneDroneELO
             catch (Exception e)
             {
                 Console.WriteLine(e);
+                Console.ReadLine();
             }
         }
 
@@ -102,6 +103,11 @@ namespace CloneDroneELO
         public static async Task TryChangeUserNicknameTo(ulong userID, string newNickname)
         {
             await _userHandler.SetUserNickname(userID, newNickname);
+        }
+
+        public static async Task TrySetPreferredRegion(ulong userID, RegionType newRegion)
+        {
+            await _userHandler.SetUserRegion(userID, newRegion);
         }
 
         static async Task MainLoop()
