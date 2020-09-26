@@ -9,6 +9,46 @@ using System.Threading.Tasks;
 
 namespace CloneDroneELO
 {
+    public abstract class BaseUserHandler : IAsyncSerializable
+    {
+        protected readonly DiscordSocketClient _client;
+        protected static Dictionary<ulong, UserData> _userDictionary;
+
+        public async Task InitializeAsync()
+        {
+            _userDictionary = await Program.GetOrCreateUserDictionaryAsync();
+
+            _client.UserUpdated += onUserUpdatedAsync;
+
+            await HookAsync();
+        }
+
+        async Task onUserUpdatedAsync(SocketUser oldUser, SocketUser newUser)
+        {
+
+        }
+
+        public BaseUserHandler(DiscordSocketClient discordSocketClient)
+        {
+            _client = discordSocketClient;
+        }
+
+        public abstract Task HookAsync();
+
+        public abstract Task DeserializeAsync(BinaryReader binaryReader);
+        public abstract Task SerializeAsync(BinaryWriter binaryWriter);
+
+        protected abstract Task onUserAdded();
+    }
+
+    public class TestUserHandler : BaseUserHandler
+    {
+        public async override Task HookAsync()
+        {
+
+        }
+    }
+
     public class UserHandler
     {
         readonly DiscordSocketClient _client;
